@@ -1,0 +1,79 @@
+services:
+  master:
+    build:
+      context: ./master
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - GO_ENV=production
+    networks:
+      - web-cluster
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/cluster/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  worker-1:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    ports:
+      - "9001:9000"
+    environment:
+      - NODE_ID=worker-1
+      - MASTER_ADDRESS=master
+      - MASTER_PORT=8081
+    depends_on:
+      - master
+    networks:
+      - web-cluster
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  worker-2:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    ports:
+      - "9002:9000"
+    environment:
+      - NODE_ID=worker-2
+      - MASTER_ADDRESS=master
+      - MASTER_PORT=8081
+    depends_on:
+      - master
+    networks:
+      - web-cluster
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  test-client:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile
+    depends_on:
+      - master
+      - worker-1
+      - worker-2
+    networks:
+      - web-cluster
+    environment:
+      - MASTER_URL=http://master:8080
+      - WORKER1_URL=http://worker-1:9000
+      - WORKER2_URL=http://worker-2:9000
+
+networks:
+  web-cluster:
+    driver: bridge 

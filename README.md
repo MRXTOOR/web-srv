@@ -1,6 +1,5 @@
 # Web Server Cluster
 
-Распределенная система веб-серверов с центральным сервером на Go и рабочими нодами на Rust.
 
 ## Архитектура
 
@@ -78,7 +77,3 @@ web-srv/
 ```bash
 docker-compose run --rm test-client
 ```
-
-## Лицензия
-
-MIT License 
